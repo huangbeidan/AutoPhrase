@@ -10,6 +10,15 @@
 #include "../classification/label_generation.h"
 #include "../classification/predict_quality.h"
 #include "../model_training/segmentation.h"
+#include <cstdio>
+#include <stdlib.h>
+#include <fstream>
+#include <iostream>
+#include <vector>
+#include <string>
+#include <sstream>
+#include <string>
+#include <ctime>
 
 namespace Dump
 {
@@ -173,13 +182,59 @@ void dumpRankingList(const string& filename, vector<pair<T, PATTERN_ID_TYPE>> &o
     sort(order.rbegin(), order.rend());
     for (size_t iter = 0; iter < order.size(); ++ iter) {
         PATTERN_ID_TYPE i = order[iter].second;
-        fprintf(out, "%.10f\t", patterns[i].quality);
-        for (int j = 0; j < patterns[i].tokens.size(); ++ j) {
-            fprintf(out, "%d%c", patterns[i].tokens[j], j + 1 == patterns[i].tokens.size() ? '\n' : ' ');
+
+        /**
+         * Beidan made threshold
+         */
+        if(patterns[i].quality > 0.6){
+
+            fprintf(out, "%.10f\t", patterns[i].quality);
+            for (int j = 0; j < patterns[i].tokens.size(); ++ j) {
+                fprintf(out, "%d%c", patterns[i].tokens[j], j + 1 == patterns[i].tokens.size() ? '\n' : ' ');
+            }
         }
     }
     fclose(out);
 }
+
+template<class T>
+void dumpRankingList_labels(const string& filename, vector<pair<T, PATTERN_ID_TYPE>> &order, const double& threshold)
+    {
+        FILE* out = tryOpen(filename, "w");
+        sort(order.rbegin(), order.rend());
+        for (size_t iter = 0; iter < order.size(); ++ iter) {
+            PATTERN_ID_TYPE i = order[iter].second;
+            if (patterns[i].quality > threshold){
+                fprintf(out, "%u\t", i);
+                fprintf(out, "%u\t", patterns[i].label);
+                fprintf(out, "%.10f\t", patterns[i].quality);
+                for (int j = 0; j < patterns[i].tokens.size(); ++ j) {
+                    fprintf(out, "%d%c", patterns[i].tokens[j], j + 1 == patterns[i].tokens.size() ? '\n' : ' ');
+                }
+            }
+        }
+        fclose(out);
+    }
+
+
+
+void dumpPatternStruct(){
+    FILE *outfile;
+
+    // open file for writing
+    outfile = fopen ("tmp/patterns_struct.dat", "w");
+    if (outfile == NULL)
+    {
+        fprintf(stderr, "\nError opend file\n");
+        exit (1);
+    }
+    fwrite (&patterns, sizeof(patterns), 1, outfile);
+
+    // close file
+    fclose (outfile);
+
+}
+
 
 void dumpResults(const string& prefix)
 {
@@ -208,6 +263,95 @@ void dumpResults(const string& prefix)
     dumpRankingList(prefix + "_salient.txt", order);
 }
 
-};
+void updatePatternsActiveLearning(){
+        cout << "Reading labeled intermedia file from disk" << endl;
+        FILE *infile;
+        patterns.clear();
+        // Open person.dat for reading
+        infile = fopen ("tmp/patterns_struct.dat", "r");
+        if (infile == NULL)
+        {
+            fprintf(stderr, "\nError opening file\n");
+            exit (1);
+        }
+        // read file contents till end of file
+        fread(&patterns, sizeof(patterns), 1, infile);
+        cout << "Reading " << sizeof(patterns) << " patterns from disk" << endl;
+        // close file
+        fclose (infile);
+    }
+
+}
+
+void loadLabelPatterns(const string& filename){
+
+    FILE* in = tryOpen(filename, "r");
+    cout << "AL rectifying ... " << endl;
+
+    while (getLine(in)) {
+        vector<string> tokens = splitBy(line, '\t');
+        if (tokens.size() == 2) {
+            TOKEN_ID_TYPE id;
+            int label;
+            fromString(tokens[0], id);
+            fromString(tokens[1], label);
+
+            patterns[id].label = label;
+
+
+        }
+    }
+
+    }
+
+
+void calculateTopAvgScore(){
+
+//    calculate three scores: top 5% average, % with score > 0.9, percentage of middle-zone scores
+
+    vector<pair<double, PATTERN_ID_TYPE>> order;
+    int high_score_patterns=0;
+    int middle_score_patterns=0;
+
+    for (PATTERN_ID_TYPE i = 0; i < patterns.size(); ++ i) {
+        if (patterns[i].size() > 1 && patterns[i].currentFreq > 0) {
+            order.push_back(make_pair(patterns[i].quality, i));
+            if ((double) patterns[i].quality > 0.9){
+                high_score_patterns += 1;
+            }else if(patterns[i].quality >0.6 && patterns[i].quality<0.8){
+                middle_score_patterns += 1;
+            }
+        }
+    }
+
+    sort(order.rbegin(), order.rend());
+    int i = 0;
+    int size = order.size();
+    double sum = 0;
+
+    while(i < 0.05 * size){
+        PATTERN_ID_TYPE idx = order[i].second;
+        sum += patterns[idx].quality;
+        i += 1;
+    }
+
+    // saving logs
+    FILE* out = tryOpen("tmp/al_log.txt", "a");
+
+    std::time_t result = std::time(nullptr);
+
+    fprintf(out, std::asctime(std::localtime(&result)));
+    fprintf(out, "\n");
+    fprintf(out, "top5 percent average score is: %.10f\n", (double) sum/(i+1));
+    fprintf(out, "% with score>0.9 is: %.10f\n", (double) high_score_patterns/size);
+    fprintf(out, "% with 0.8 > score > 0.7 is: %.10f\n", (double ) middle_score_patterns/size);
+    fprintf(out, "\n");
+
+//    cout << "top5% average score is: " << sum/(i+1) << endl;
+//    cout << "% with score>0.9 is: " << (double) high_score_patterns/size << endl;
+//    cout << "% with 0.8 > score > 0.7 is: " << (double ) middle_score_patterns/size << endl;
+
+    fclose(out);
+}
 
 #endif

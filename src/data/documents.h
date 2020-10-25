@@ -110,6 +110,7 @@ namespace Documents
         fclose(in);
     }
 
+
     inline void loadAllTrainingFiles(const string& docFile, const string& posFile, const string& capitalFile) {
         if (true) {
             // get total number of tokens and the maximum number of tokens

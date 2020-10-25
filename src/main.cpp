@@ -26,6 +26,7 @@ int main(int argc, char* argv[])
     Documents::loadAllTrainingFiles(TRAIN_FILE, POS_TAGS_FILE, TRAIN_CAPITAL_FILE);
     Documents::splitIntoSentences();
 
+    //check if patterns on the fly exists first?
     cerr << "Mining frequent phrases..." << endl;
     FrequentPatternMining::initialize();
     FrequentPatternMining::mine(MIN_SUP, MAX_LEN);
@@ -63,7 +64,26 @@ int main(int argc, char* argv[])
     }
 
     // SegPhrase, +, ++, +++, ...
+    bool AL = false;
     for (int iteration = 0; iteration < ITERATIONS; ++ iteration) {
+
+        //AL injection point starts
+        if (AL) {
+
+            if (iteration > ACTIVE_LEARNING_START){
+                //update pattern -- wait for user input
+                cout << "Press Enter to Continue";
+                cin.ignore(std::numeric_limits<streamsize>::max(),'\n');
+
+                //get the updated pattern file [label + pattern_id]
+
+                loadLabelPatterns("tmp/labeled_patterns.txt");
+            }
+
+        }
+
+
+
         if (INTERMEDIATE) {
             fprintf(stderr, "Feature Matrix = %d X %d\n", features.size(), features.back().size());
         }
@@ -171,7 +191,6 @@ int main(int argc, char* argv[])
                 }
             }
             */
-
             features = Features::extract(featureNames);
             featuresUnigram = Features::extractUnigram(featureNamesUnigram);
         }
@@ -182,7 +201,27 @@ int main(int argc, char* argv[])
             sprintf(filename, "tmp/iter_%d_frequent_quality", iteration);
             Dump::dumpResults(filename);
         }
+
+        calculateTopAvgScore();
+
+        // dump patterns after training has finished?
+        vector<pair<double, PATTERN_ID_TYPE>> order;
+        for (PATTERN_ID_TYPE i = 0; i < patterns.size(); ++ i) {
+            if (patterns[i].size() > 1 && patterns[i].currentFreq > 0) {
+                order.push_back(make_pair(patterns[i].quality, i));
+            }
+        }
+
+        cout << "Writing to disk" << endl;
+        Dump::dumpRankingList_labels("tmp/intermediate_labels.txt", order, 0.6);
+        order.clear();
     }
+
+
+
+
+    cout << "Writing patterns to disk" << endl;
+    Dump::dumpPatternStruct();
 
     cerr << "Dumping results..." << endl;
     Dump::dumpResults("tmp/final_quality");

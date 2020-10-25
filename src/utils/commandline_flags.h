@@ -43,6 +43,9 @@ void parseCommandFlags(int argc, char* argv[])
             fromString(argv[++ i], SEGMENT_MULTI_WORD_QUALITY_THRESHOLD);
         } else if (!strcmp(argv[i], "--highlight-single")) {
             fromString(argv[++ i], SEGMENT_SINGLE_WORD_QUALITY_THRESHOLD);
+        }
+        else if (!strcmp(argv[i], "--active_learning")) {
+            ACTIVE_LEARNING = false;
         } else {
             fprintf(stderr, "[Warning] Unknown Parameter: %s\n", argv[i]);
         }
