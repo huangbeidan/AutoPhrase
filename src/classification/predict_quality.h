@@ -54,6 +54,8 @@ void predictQuality(vector<Pattern> &patterns, vector<vector<double>> &features,
 
 	for (PATTERN_ID_TYPE i = 0; i < features.size(); ++ i) {
         if (patterns[i].size() > 1) {
+            //get rid of some features for experiments
+//            features[i][1] = -1;
             patterns[i].quality = solver->estimate(features[i]);
         }
 	}

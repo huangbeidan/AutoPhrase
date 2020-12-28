@@ -498,6 +498,7 @@ public:
                 tokens.push_back(Documents::wordTokens[i]);
                 tags.push_back(Documents::posTags[i]);
             }
+
             vector<double> f;
             vector<int> pre;
 

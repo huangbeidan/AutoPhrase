@@ -43,9 +43,10 @@ int NTHREADS = 4;
 bool ENABLE_POS_TAGGING = false;
 bool ENABLE_POS_PRUNE = false;
 string NO_EXPANSION_POS_FILENAME = "";
+
 double DISCARD = 0.05;
 string LABEL_FILE = "";
-bool INTERMEDIATE = false;
+bool INTERMEDIATE = true;
 string LABEL_METHOD = "DPDN"; // EPEN, EPDN, DPDN
 
 string SEGMENTATION_MODEL = "";
@@ -53,6 +54,9 @@ double SEGMENT_MULTI_WORD_QUALITY_THRESHOLD = 0.5;
 double SEGMENT_SINGLE_WORD_QUALITY_THRESHOLD = 0.8;
 const string TEXT_TO_SEG_FILE = "tmp/tokenized_text_to_seg.txt";
 const string TEXT_TO_SEG_POS_TAGS_FILE = "tmp/pos_tags_tokenized_text_to_seg.txt";
+
+bool ACTIVE_LEARNING = false;
+int ACTIVE_LEARNING_START = 0;
 
 
 #endif

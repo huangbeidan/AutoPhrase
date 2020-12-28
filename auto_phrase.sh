@@ -21,7 +21,7 @@ else
 fi
 MODEL=${MODEL:- ${MODELS_DIR}/DBLP}
 # RAW_TRAIN is the input of AutoPhrase, where each line is a single document.
-DEFAULT_TRAIN=${DATA_DIR}/EN/DBLP.5K.txt
+DEFAULT_TRAIN=${DATA_DIR}/EN/patentdb-medium.txt
 RAW_TRAIN=${RAW_TRAIN:- $DEFAULT_TRAIN}
 # When FIRST_RUN is set to 1, AutoPhrase will run all preprocessing. 
 # Otherwise, AutoPhrase directly starts from the current preprocessed data in the tmp/ folder.
@@ -38,6 +38,7 @@ COMPILE=${COMPILE:- 1}
 MAX_POSITIVES=-1
 LABEL_METHOD=DPDN
 RAW_LABEL_FILE=${RAW_LABEL_FILE:-""}
+#RAW_LABEL_FILE=${DATA_DIR}/EN/patentdb-medium-expert.txt
 ### End: Suggested Parameters ###
 
 green=`tput setaf 2`
@@ -116,6 +117,7 @@ if [ $ENABLE_POS_TAGGING -eq 1 ]; then
         --thread $THREAD \
         --pos_prune ${DATA_DIR}/BAD_POS_TAGS.txt \
         --label_method $LABEL_METHOD \
+        --active_learning \
 		--label $LABEL_FILE \
         --max_positives $MAX_POSITIVES \
         --min_sup $MIN_SUP

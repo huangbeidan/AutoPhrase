@@ -271,12 +271,23 @@ public:
 
     double estimate(vector<double> &features) {
         TreeNode *current = &nodes[0];
-        while (!current->leaf) {
-            if (features[current->feature] < current->value) {
-                current = &nodes[current->left];
-            } else {
-                current = &nodes[current->right];
+        while (!current->leaf){
+//            cout << "what is current feature? " << current->feature << endl;
+            if (features[current -> feature] == -1){
+                int n = rand() % 2;
+                if(n == 0){
+                    current = &nodes[current->left];
+                }else{
+                    current = &nodes[current->right];
+                }
+            }else{
+                if (features[current->feature] < current->value) {
+                    current = &nodes[current->left];
+                } else {
+                    current = &nodes[current->right];
+                }
             }
+
         }
         return current->result;
     }
